@@ -1,0 +1,73 @@
+const wm = new WeakMap<any, Record<string, Set<Function>>>()
+
+export function reactive<T extends Record<string, any>>(obj: T): T {
+  return new Proxy(obj, {
+    get(o, k: string, r) {
+      track(o, k)
+      return Reflect.get(obj, k, r)
+    },
+    set(o, k: string, v, r) {
+      const ret = Reflect.set(o, k, v, r)
+      trigger(o, k)
+      return ret
+    }
+  })
+}
+
+export type Ref<T> = { value: T }
+export function ref<T>(value: T): Ref<T>
+export function ref<T = any>(): Ref<T | undefined>
+export function ref<T>(value?: T ) { return reactive({ value }) }
+
+const es = [] as Function[]
+
+type EffectOption = { scheduler: (fun: Function) => void, immediate: boolean }
+
+export function effect(cb: () => void, opt?: EffectOption) {
+  const fun = () => (opt?.scheduler ?? enqueue)(fun.run)
+  fun.run = () => {
+    es.push(fun)
+    cb()
+    es.pop()
+  }
+  fun.run()
+}
+
+function trigger(o: any, k: string) {
+  wm.get(o)?.[k]?.forEach(e => e())
+}
+
+function track(o: any, k: string) {
+  const e = es.at(-1)
+  if (!e) return
+  ((wm.get(o) || wm.set(o, {}).get(o)!)[k] ??= new Set()).add(e)
+  
+}
+
+export function queueMicro(cb: () => void) {
+  queueMicrotask ? queueMicrotask(cb) : Promise.resolve().then(cb)
+}
+
+const queue = [] as Function[]
+const postQueue = [] as Function[]
+let looping = false
+
+export function enqueue(cb: Function) {
+  queue.includes(cb) || queue.push(cb)
+  flush()
+}
+
+export function nextTick(cb: Function) {
+  postQueue.includes(cb) || postQueue.push(cb)
+  flush()
+}
+
+function flush() {
+  if (looping) return
+  looping = true
+  queueMicro(() => {
+    while (queue.length) queue.shift()!()
+    while (postQueue.length) postQueue.shift()!()
+    looping = false
+  })
+}
