@@ -1,6 +1,6 @@
-import { html, render } from 'lit'
+import { html } from 'lit'
 import { defineComponent } from "./defineComponent";
-import { computed, effect } from './reactivity';
+import { computed, effect, enqueue } from './reactivity';
 
 const TeleportProps = {
   to: '',
@@ -8,19 +8,24 @@ const TeleportProps = {
 }
 
 defineComponent('wc-teleport', TeleportProps, function(props) {
-  const fragment = document.createDocumentFragment()
-  const to = computed(() => props.to && document.querySelector(props.to))
+  const to = computed(() => props.to ? document.querySelector(props.to) as HTMLElement : null)
+  const enable = computed(() => to?.value && !props.disabled)
+
+  let first = true
+
+  let children = [] as Element[]
 
   effect(() => {
-    // render(html`<slot></slot>`, props.disabled ? this.shadowRoot! : document.querySelector(props.to) as HTMLElement)
-    
-    const enable =  !to || props.disabled
-    if (enable) {
-      this.replaceChildren(...fragment.children)
-    } else {
-      fragment.replaceChildren(...this.children)
+    if (enable.value) {
+      children = [...this.children]
+      const fragment = document.createDocumentFragment()
+      fragment.replaceChildren(...children)
       to.value!.appendChild(fragment)
+    } else if (!first) {
+      this.replaceChildren(...children)
     }
+
+    first = false
   })
 
   return () => html`<slot></slot>`

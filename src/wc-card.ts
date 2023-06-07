@@ -2,7 +2,7 @@ import { html, render } from 'lit'
 // import { ref } from 'lit/directives/ref.js'
 import { styleMap } from 'lit/directives/style-map.js'
 import { defineComponent } from './defineComponent'
-import { reactive, ref } from './reactivity'
+import { nextTick, reactive, ref } from './reactivity'
 
 const Props = {
   open: false,
@@ -20,20 +20,26 @@ defineComponent('wc-card', Props, function(props) {
     props.open = !props.open
     rect.value = el.getBoundingClientRect()
 
-    render(renderDialog(), document.body)
+    render(renderDialog(), el.shadowRoot!)
 
-    const dialog = document.getElementById('dialog')!
-    dialog.offsetWidth
-    
-    const boundary = Array(4).fill(0)
-    Object.assign(dialog.style, { top: boundary[0], right: boundary[0], bottom: boundary[0], left: boundary[0] } )
+    nextTick(() => {
+          const dialog = document.querySelector('#dialog')! as HTMLElement
+          console.log(3);
+          
+          dialog.offsetWidth
+          
+          const boundary = Array(4).fill(0)
+          Object.assign(dialog.style, { top: boundary[0], right: boundary[0], bottom: boundary[0], left: boundary[0] } )
+    })
   }
 
   function renderDialog() {
     // @ts-ignore
     const style = { position: 'fixed', ...rectKs.reduce((o, k) => (o[k] = rect.value[k] + 'px', o), {}), transition: 'all 300ms ease' }
     return html`
-      <div id="dialog" style="${styleMap(style)}">asd</div>
+      <wc-teleport to='body'>
+        <div id="dialog" style="${styleMap(style)}">teleport</div>
+      </wc-teleport>
     `
   }
 
@@ -41,7 +47,7 @@ defineComponent('wc-card', Props, function(props) {
     <div style='visibility: ${props.open ? 'hidden' : ''}'>
       <slot></slot>
     </div>
-    ${props.open ? html`<slot name='info'></slot>` : undefined}
     <button @click=${onClick}>xxx</button>
-  `
+    `
+    // ${props.open ? html`<slot name='info'></slot>` : undefined}
 })

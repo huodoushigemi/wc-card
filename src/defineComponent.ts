@@ -8,15 +8,13 @@ type Cbs = (() => void)[]
 const toType = (val: any) => Object.prototype.toString.call(val).slice(8, -1) as keyof typeof TypeConverter
 
 const TypeConverter = {
-  String: String,
+  String,
   Number: (val: string) => Number(val),
   Boolean: (val: string) => val === 'false' ? false : Boolean(val),
   Object: (val: string) => val != null ? JSON.parse(val) : val,
   Array: (val: string) => val != null ? JSON.parse(val) : val,
   Date: (val: string) => new Date(val),
   RegExp: (val: string) => new RegExp(val),
-  Null: (val: string) => new RegExp(val),
-  Undefined: (val: string) => new RegExp(val)
 }
 
 interface Lifecycs {
@@ -26,7 +24,7 @@ interface Lifecycs {
   _um?: Cbs
 }
 
-export function defineComponent<T extends Record<string, any>, KS extends keyof T>(name: string, ps: T, factory: (this: Element, props: T) => void | (() => void | TemplateResult<1>)) {
+export function defineComponent<T extends Record<string, any>, KS extends keyof T>(name: string, ps: T, factory: (this: HTMLElement, props: T) => void | (() => void | TemplateResult<1>)) {
   const Component = class extends HTMLElement implements Lifecycs {
     _props = JSON.parse(JSON.stringify(ps)) as T
     props: T

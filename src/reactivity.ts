@@ -7,6 +7,7 @@ export function reactive<T extends Record<string, any>>(obj: T): T {
       return Reflect.get(obj, k, r)
     },
     set(o, k: string, v, r) {
+      if (o[k] === v) return true
       const ret = Reflect.set(o, k, v, r)
       trigger(o, k)
       return ret
@@ -19,24 +20,24 @@ export function ref<T>(value: T): Ref<T>
 export function ref<T = any>(): Ref<T | undefined>
 export function ref<T>(value?: T ) { return reactive({ value }) }
 
-export const computed = <T>(get: () => T): { readonly value: T } => {
-  const cahced = { get value() { return get() } }
-  effect(() => cahced.value, { scheduler: cb => cb() })
+export const computed = <T>(get: () => T) => {
+  const cahced = ref<T>()
+  effect(() => cahced.value = get(), { scheduler: cb => cb() })
   return cahced
 }
 
 const es = [] as Function[]
 
-type EffectOption = { scheduler: (fun: Function) => void }
+type EffectOption = { scheduler?: (fun: Function) => void, immediate?: boolean, cb?: () => void }
 
-export function effect(cb: () => void, opt?: EffectOption) {
-  const fun = () => (opt?.scheduler ?? enqueue)(fun.run)
+export function effect(depFn: () => void, opt?: EffectOption) {
+  const fun = () => (opt?.scheduler ?? enqueue)(opt?.cb ?? fun.run)
   fun.run = () => {
     es.push(fun)
-    cb()
+    depFn()
     es.pop()
   }
-  fun.run()
+  (opt?.immediate == null || opt?.immediate) && fun.run()
 }
 
 function trigger(o: any, k: string) {
