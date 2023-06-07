@@ -1,9 +1,23 @@
-import { render } from 'https://unpkg.com/lit-html?module'
+import { render, TemplateResult } from 'lit'
 import { effect, reactive } from './reactivity'
 
 let currentInstance: Lifecycs | null
 
 type Cbs = (() => void)[]
+
+const toType = (val: any) => Object.prototype.toString.call(val).slice(8, -1) as keyof typeof TypeConverter
+
+const TypeConverter = {
+  String: String,
+  Number: (val: string) => Number(val),
+  Boolean: (val: string) => val === 'false' ? false : Boolean(val),
+  Object: (val: string) => val != null ? JSON.parse(val) : val,
+  Array: (val: string) => val != null ? JSON.parse(val) : val,
+  Date: (val: string) => new Date(val),
+  RegExp: (val: string) => new RegExp(val),
+  Null: (val: string) => new RegExp(val),
+  Undefined: (val: string) => new RegExp(val)
+}
 
 interface Lifecycs {
   _m?: Cbs
@@ -12,11 +26,11 @@ interface Lifecycs {
   _um?: Cbs
 }
 
-export function defineComponent<T extends Record<string, any>, KS extends keyof T>(name: string, ps: T, factory: (this: Element, props: T) => () => string) {
+export function defineComponent<T extends Record<string, any>, KS extends keyof T>(name: string, ps: T, factory: (this: Element, props: T) => void | (() => void | TemplateResult<1>)) {
   const Component = class extends HTMLElement implements Lifecycs {
-    static observedAttributes = Object.keys(ps)
-
-    _props: T
+    _props = JSON.parse(JSON.stringify(ps)) as T
+    props: T
+    static get observedAttributes() { return Object.keys(ps) }
 
     _m?: Cbs
     _bu?: Cbs
@@ -26,10 +40,10 @@ export function defineComponent<T extends Record<string, any>, KS extends keyof 
     constructor() {
       super()
       const root = this.attachShadow({ mode: 'open' })
-      this._props = reactive(ps)
+      this.props = reactive(this._props)
 
       currentInstance = this
-      const template = factory.call(this, this._props)
+      const template = factory.call(this, this.props)
       currentInstance = null
 
       let isMounted = false
@@ -38,7 +52,7 @@ export function defineComponent<T extends Record<string, any>, KS extends keyof 
         if (isMounted) this._bu?.forEach(cb => cb())
         
         console.log('render');
-        render(template(), root)
+        template && render(template(), root)
 
         if (isMounted) {
           this._u?.forEach(cb => cb())
@@ -53,10 +67,18 @@ export function defineComponent<T extends Record<string, any>, KS extends keyof 
     disconnectedCallback() {
       this._um?.forEach(cb => cb())
     }
-    attributeChangedCallback(k: KS, old: any, val: any) {
-      this._props[k] = val
+    attributeChangedCallback(k: KS, old: string, val: string) {
+      this.props[k] = TypeConverter[toType(ps[k] ?? '')](val)
+      console.log('attributeChangedCallback', k, this.props[k])
     }
   }
+
+  Object.keys(ps).forEach(prop => {
+    Object.defineProperty(Component.prototype, prop, {
+      get() { return this.props[prop] },
+      set(v) { this.props[prop] = v }
+    })
+  })
 
   customElements.define(name, Component)
 }

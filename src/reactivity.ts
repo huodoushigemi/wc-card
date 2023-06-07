@@ -19,9 +19,15 @@ export function ref<T>(value: T): Ref<T>
 export function ref<T = any>(): Ref<T | undefined>
 export function ref<T>(value?: T ) { return reactive({ value }) }
 
+export const computed = <T>(get: () => T): { readonly value: T } => {
+  const cahced = { get value() { return get() } }
+  effect(() => cahced.value, { scheduler: cb => cb() })
+  return cahced
+}
+
 const es = [] as Function[]
 
-type EffectOption = { scheduler: (fun: Function) => void, immediate: boolean }
+type EffectOption = { scheduler: (fun: Function) => void }
 
 export function effect(cb: () => void, opt?: EffectOption) {
   const fun = () => (opt?.scheduler ?? enqueue)(fun.run)
