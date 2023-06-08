@@ -2,52 +2,45 @@ import { html, render } from 'lit'
 // import { ref } from 'lit/directives/ref.js'
 import { styleMap } from 'lit/directives/style-map.js'
 import { defineComponent } from './defineComponent'
-import { nextTick, reactive, ref } from './reactivity'
+import { effect, nextTick, reactive, ref } from './reactivity'
 
 const Props = {
   open: false,
-  boundary: [] as (string | number)[]
+  boundary: [0, 0, 0, 0]
 }
 
 const rectKs = ['top', 'right', 'bottom', 'left']
 
-defineComponent('wc-card', Props, function(props) {
+defineComponent('wc-card', Props, function (props) {
   const el = this
 
-  const rect = ref<DOMRect>()
+  let placeholder = {} as any
+  const style = ref<any>({})
 
-  function onClick() {
-    props.open = !props.open
-    rect.value = el.getBoundingClientRect()
+  effect(() => props.open, {
+    cb: () => {
+      if (props.open) {
+        const rect = el.getBoundingClientRect()
+        // @ts-ignore
+        // plceholder = rectKs.reduce((o, k) => (o[k] = _rect[k], o), {})
+        placeholder = `width: ${rect.width}px; height: ${rect.height}px;`
+        style.value = { position: 'fixed', top: rect.top + 'px', right: rect.right + 'px', bottom: rect.bottom + 'px', left: rect.left + 'px' }
+        requestAnimationFrame(() => {
+          const { boundary: b } = props
+          style.value = { position: 'fixed', left: b[0] + 'px', top: b[1] + 'px', right: b[2] + 'px', bottom: b[3] + 'px' }
+        })
+      } else {
+        style.value = {}
+      }
+    }
+  })
 
-    render(renderDialog(), el.shadowRoot!)
-
-    nextTick(() => {
-          const dialog = document.querySelector('#dialog')! as HTMLElement
-          console.log(3);
-          
-          dialog.offsetWidth
-          
-          const boundary = Array(4).fill(0)
-          Object.assign(dialog.style, { top: boundary[0], right: boundary[0], bottom: boundary[0], left: boundary[0] } )
-    })
-  }
-
-  function renderDialog() {
-    // @ts-ignore
-    const style = { position: 'fixed', ...rectKs.reduce((o, k) => (o[k] = rect.value[k] + 'px', o), {}), transition: 'all 300ms ease' }
-    return html`
-      <wc-teleport to='body'>
-        <div id="dialog" style="${styleMap(style)}">teleport</div>
-      </wc-teleport>
-    `
-  }
-
+  // ${ props.open ? html`<slot name="info" />` : undefined }
   return () => html`
-    <div style='visibility: ${props.open ? 'hidden' : ''}'>
+    <div style="${styleMap({ ...style.value, overflow: 'hidden', transition: 'inset 1600ms', border: '1px solid red' })}">
       <slot></slot>
+      <div>aaaa</div>
     </div>
-    <button @click=${onClick}>xxx</button>
-    `
-    // ${props.open ? html`<slot name='info'></slot>` : undefined}
+    ${props.open ? html`<div style="${placeholder}"></div>` : undefined}
+  `
 })

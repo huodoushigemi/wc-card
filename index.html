@@ -8,16 +8,38 @@
   </head>
   <body>
     <div id="app">
-      <wc-card>
-        aaa
+      <button onclick="qwe()">click</button>
+
+      <wc-card id="xxx" boundary="[100,100,100,100]">
+        <div class="card">
+          <img src="https://ts3.cn.mm.bing.net/th?id=ORMS.f6d9e075acd231ff3def0fe35e26168b&pid=Wdp&w=300&h=156&qlt=90&c=1&rs=1&dpr=1.5&p=0" />
+          <h2>苹果 Vision Pro 近视镜片价格可能在 2000 到 4000 元</h2>
+        </div>
         <div slot="info">asdasdasd</div>
       </wc-card>
-
-      <!-- <wc-teleport>
-        <div>teleport</div>
-      </wc-teleport> -->
     </div>
     <script type="module" src="/src/main.ts"></script>
+
+    <style>
+      .card {
+        width: 320px;
+        padding: 10px;
+        border-radius: 8px;
+        background: #333333;
+      }
+
+      img {
+        width: 100%;
+      }
+    </style>
+
+    <script>
+      const xxx = document.getElementById('xxx')
+
+      function qwe() {
+        xxx.open = !xxx.open
+      }
+    </script>
 
   </body>
 </html>

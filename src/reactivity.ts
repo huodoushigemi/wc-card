@@ -73,8 +73,10 @@ function flush() {
   if (looping) return
   looping = true
   queueMicro(() => {
-    while (queue.length) queue.shift()!()
-    while (postQueue.length) postQueue.shift()!()
+    while (queue.length || postQueue.length) {
+      while (queue.length) queue.shift()!()
+      while (postQueue.length) postQueue.shift()!()
+    }
     looping = false
   })
 }
