@@ -1,3 +1,5 @@
+type CB = () => void
+
 const wm = new WeakMap<any, Record<string, Set<Function>>>()
 
 export function reactive<T extends Record<string, any>>(obj: T): T {
@@ -28,10 +30,10 @@ export const computed = <T>(get: () => T) => {
 
 const es = [] as Function[]
 
-type EffectOption = { scheduler?: (fun: Function) => void, immediate?: boolean, cb?: () => void }
+type EffectOption = Partial<{ scheduler: (fun: Function) => void, immediate: boolean, cb: () => void }>
 
-export function effect(depFn: () => void, opt?: EffectOption) {
-  const fun = () => (opt?.scheduler ?? enqueue)(opt?.cb ?? fun.run)
+export function effect(depFn: () => void, opt?: EffectOption | (CB & EffectOption)) {
+  const fun = () => (opt?.scheduler ?? enqueue)(typeof opt === 'function' ? opt : (opt?.cb ?? fun.run))
   fun.run = () => {
     es.push(fun)
     depFn()
@@ -61,15 +63,15 @@ let looping = false
 
 export function enqueue(cb: Function) {
   queue.includes(cb) || queue.push(cb)
-  flush()
+  flushJobs()
 }
 
 export function nextTick(cb: Function) {
   postQueue.includes(cb) || postQueue.push(cb)
-  flush()
+  flushJobs()
 }
 
-function flush() {
+function flushJobs() {
   if (looping) return
   looping = true
   queueMicro(() => {

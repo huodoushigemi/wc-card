@@ -4,37 +4,49 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script type="module" src="/src/main.ts" async></script>
     <title>Vite + TS</title>
   </head>
   <body>
     <div id="app">
-      <button onclick="qwe()">click</button>
+      <!-- <button onclick="qwe()">click</button> -->
 
-      <wc-card id="xxx" boundary="[100,100,100,100]">
+      <!-- <wc-card id="xxx" boundary="[100,100,100,100]" wrap-style="display: flex">
         <div class="card">
-          <img src="https://ts3.cn.mm.bing.net/th?id=ORMS.f6d9e075acd231ff3def0fe35e26168b&pid=Wdp&w=300&h=156&qlt=90&c=1&rs=1&dpr=1.5&p=0" />
+          <img style="" src="https://ts3.cn.mm.bing.net/th?id=ORMS.f6d9e075acd231ff3def0fe35e26168b&pid=Wdp&w=300&h=156&qlt=90&c=1&rs=1&dpr=1.5&p=0" />
           <h2>苹果 Vision Pro 近视镜片价格可能在 2000 到 4000 元</h2>
         </div>
-        <div slot="info">asdasdasd</div>
-      </wc-card>
+        <div slot="info" style="padding: 10px">asdasdasd</div>
+      </wc-card> -->
+
+      <wc-test />
     </div>
-    <script type="module" src="/src/main.ts"></script>
 
     <style>
       .card {
-        width: 320px;
+        width: 400px;
+        flex: 0 0 auto;
         padding: 10px;
-        border-radius: 8px;
         background: #333333;
+        box-sizing: border-box;
       }
 
       img {
+        object-fit: cover;
         width: 100%;
+        max-height: 800px;
       }
     </style>
 
     <script>
       const xxx = document.getElementById('xxx')
+
+      console.log(11);
+      
+      // setTimeout(() => {
+      //   xxx.boundary = [100, 100, window.innerWidth - 100, window.innerHeight - 100]
+      //   console.log(xxx.boundary);
+      // }, 100)
 
       function qwe() {
         xxx.open = !xxx.open
