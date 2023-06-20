@@ -6,7 +6,8 @@ export const appbarProps = {
   expandedHeight: 0,
   floating: false,
   pinned: false,
-  snap: false
+  snap: false,
+  elevation: ''
 }
 
 function getScrollParent(el: HTMLElement) {
